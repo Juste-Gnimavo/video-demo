@@ -175,10 +175,9 @@ export default defineDemo({
     force: true,
   });
   await cp(join(TEMPLATE, 'mock.ts'), join(project, 'mock.ts'), { force: true });
-  await cp(join(TEMPLATE, 'seed'), join(project, 'seed'), {
-    recursive: true,
-    force: true,
-  });
+  // Empty, because seeded data is written per app and a stub would only be
+  // something to delete.
+  await mkdir(join(project, 'seed'), { recursive: true });
 }
 
 }

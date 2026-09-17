@@ -1,6 +1,6 @@
 ---
 name: video-demo
-description: Film a narrated, zooming, cursor-driven demo of a web app: 1080p60 mp4 clips with a local Kokoro voice-over, retina stills, a stitched tour, a manifest.json and a preview page a site can read. Films either a repo it builds and mocks, or a live production URL as it is served. Use when the user asks for a demo video, product video, walkthrough, screencast, screen recording of an app or of a URL, hero or landing-page footage, app screenshots for a website, "show off this feature", "record a demo of <url>", or wants to add, re-film, re-narrate or fix a demo scene.
+description: Films a web app as narrated, zooming, cursor-driven demo videos with retina screenshots, either from a repo it builds and mocks or from a live URL as it is served. Use when the user asks for a demo video, product video, walkthrough, screencast, screen recording of an app or of a URL, hero or landing-page footage, app screenshots for a website, "show off this feature", "record a demo of <url>", or wants to add, re-film, re-narrate or fix a demo scene.
 ---
 
 # Video demo
@@ -33,6 +33,11 @@ Each of these cost a run or a user's patience.
    twenty-six more scenes were filmed.
 7. **Read the PNG, every time.** A scene that passes while framing the wrong
    thing is a failure, and only an eye on the still catches it.
+8. **Nothing is final until they say so.** Any note about the words, the
+   framing, the pace, what is covered or the voice is a re-film, not a
+   negotiation: change it and film it again. They cannot see what you can, so
+   "too long", "zoom in more" and "stop zooming so much" are all complete
+   instructions, and a scene is cheap to shoot twice.
 
 ## Workflow
 
@@ -45,9 +50,14 @@ Each of these cost a run or a user's patience.
    `build`; several, ask which; none, ask for a URL or a path. A workspace
    whose `.origin` already names this repo is reused, not scaffolded again.
    Say the mode and the workspace path in one line and carry on.
-2. `scripts/doctor.sh`. If the engine is not installed, offer
-   `scripts/install.sh` and name the download first. If the voice is missing,
-   say ~350MB, offer `scripts/install-voice.sh`, and film silent until then.
+2. `scripts/doctor.sh`, then **set yourself up before asking anything else of
+   the user.** They installed a skill; they did not sign up to run three
+   scripts. If the engine is missing, say what it downloads (about 250MB of
+   Playwright and Chromium) and run `scripts/install.sh` once they agree. If
+   the voice is missing, same again for `scripts/install-voice.sh` (~350MB),
+   and film silent if they would rather not. Never install either without
+   asking, and never make them read a doctor report: say what is missing in
+   one line and what you propose to do about it.
 3. **Discover, writing nothing.** `site`: open the URL and read it, for what
    the page is for, the three things worth showing, and what is stable enough
    to point at. If it lands on a sign-in, stop: a signed-in app is filmed from
@@ -68,8 +78,12 @@ Each of these cost a run or a user's patience.
    ([mocking.md](references/mocking.md)). Read the still: signed in, seeded
    data, right theme, no login page. Read the capture line. Fix until both are
    right, then write `demo/ui.ts` with only what the smoke run proved.
-7. **Propose 6 to 10 scenes**, each a title and a one-line blurb, in tour order.
-   Ask which to film first.
+7. **Film what they asked for, at the scope they asked for it.** A named
+   feature is one scene: write it, film it, hand it over. Do not answer "record
+   the search on the home page" with a ten-scene proposal, and do not quietly
+   widen the ask because the product has more in it. Only when the request is
+   the whole product do you **propose 6 to 10 scenes**, each a title and a
+   one-line blurb in tour order, and ask which to film first.
 8. **STOP.** Film that one scene with voice. Verify the spoken count matches the
    `say` calls, nothing overran, the rate held. Read every still. Give the user
    the mp4 path and ask about the writing's register, the zoom scale, the pacing
