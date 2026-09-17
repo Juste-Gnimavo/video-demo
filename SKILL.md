@@ -52,12 +52,16 @@ Each of these cost a run or a user's patience.
    Say the mode and the workspace path in one line and carry on.
 2. `scripts/doctor.sh`, then **set yourself up before asking anything else of
    the user.** They installed a skill; they did not sign up to run three
-   scripts. If the engine is missing, say what it downloads (about 250MB of
-   Playwright and Chromium) and run `scripts/install.sh` once they agree. If
-   the voice is missing, same again for `scripts/install-voice.sh` (~350MB),
-   and film silent if they would rather not. Never install either without
-   asking, and never make them read a doctor report: say what is missing in
-   one line and what you propose to do about it.
+   scripts. Say what is missing in one line, say what you propose to install
+   and roughly how big it is, and run it once they agree. `scripts/install.sh`
+   covers the engine and Chromium (about 250MB) and installs ffmpeg too where
+   a package manager allows it; `scripts/install-voice.sh` is the voice
+   (~350MB), and filming silent is a fine answer if they would rather not.
+   Never install anything without asking, and never hand them a doctor report
+   to interpret. Two things it will not do, and nor should you: upgrade their
+   Node, because which tool owns it is theirs to know, and run `sudo`, because
+   a password prompt in a script nobody is watching just hangs. In both cases
+   the script prints the one command and you pass it on.
 3. **Discover, writing nothing.** `site`: open the URL and read it, for what
    the page is for, the three things worth showing, and what is stable enough
    to point at. If it lands on a sign-in, stop: a signed-in app is filmed from

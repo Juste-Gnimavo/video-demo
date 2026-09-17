@@ -6,6 +6,7 @@ set -uo pipefail
 # filming. Voice (uv + the Kokoro model) is advisory: a missing model films
 # silent by design, so only the capture path is fatal here.
 
+SKILL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FATAL=0
 
 ok()   { printf '  ok    %s\n' "$1"; }
@@ -43,7 +44,7 @@ if command -v ffmpeg >/dev/null 2>&1; then
   ok "ffmpeg $(ffmpeg -version 2>/dev/null | head -n1 | awk '{print $3}')"
   ENCODERS=$(ffmpeg -hide_banner -encoders 2>/dev/null)
 else
-  fail "ffmpeg not found" "brew install ffmpeg  (or: apt install ffmpeg)"
+  fail "ffmpeg not found" "$SKILL/scripts/install.sh installs it"
   ENCODERS=""
 fi
 
@@ -63,7 +64,7 @@ elif [ "$HAS_X264" -eq 1 ]; then
     ok "will encode with libx264"
   fi
 else
-  fail "no h264 encoder ffmpeg can use (need h264_videotoolbox or libx264)" "reinstall ffmpeg: brew install ffmpeg  (or: apt install ffmpeg)"
+  fail "no h264 encoder ffmpeg can use (need h264_videotoolbox or libx264)" "$SKILL/scripts/install.sh, or reinstall ffmpeg with h264 support"
 fi
 
 if command -v nice >/dev/null 2>&1; then
@@ -95,7 +96,6 @@ else
   warn "uv not found (only needed to install the local voice)" "curl -LsSf https://astral.sh/uv/install.sh | sh"
 fi
 
-SKILL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # The engine's own runtime, which install.sh puts here. Nothing about the app
 # being filmed is checked: that is discovery, not a dependency.

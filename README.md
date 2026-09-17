@@ -5,8 +5,8 @@ demos and screenshots, made on your own machine.
 
 ## Install
 
-You need Node 22.18 or newer and ffmpeg (`brew install ffmpeg`, or
-`apt install ffmpeg`). macOS and Linux.
+macOS or Linux, with Node 22.18 or newer. Anything else it needs, it
+installs for you after asking.
 
 ```bash
 npx skills add nilbuild/video-demo
