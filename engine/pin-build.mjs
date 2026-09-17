@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { cp, readFile, readdir, rm, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
-import { APP_ROOT, demo } from './studio/config.ts';
+import { APP_ROOT, PROJECT, SITE, demo } from './studio/config.ts';
 
 /**
  * Builds the app fresh, then puts the result somewhere private.
@@ -23,7 +23,17 @@ import { APP_ROOT, demo } from './studio/config.ts';
  * can say what is wrong, rather than later as a wall of missing locators.
  */
 
-const PINNED = join(import.meta.dirname, '.build');
+if (SITE) {
+  process.stdout.write(`demo: filming ${SITE}, nothing to build\n`);
+  process.exit(0);
+}
+
+/**
+   * The pinned copy lives in the workspace, not beside the engine: the engine
+   * is one shared clone and two projects filming at once would otherwise
+   * overwrite each other's bundle.
+   */
+const PINNED = join(PROJECT, '.build');
 const OUTPUT = join(APP_ROOT, demo.build.output);
 
 function runBuild(command) {

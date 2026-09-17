@@ -1,5 +1,5 @@
-import { defineDemo } from './studio/define.ts';
-import { all, attribute, visible } from './studio/ready.ts';
+import { defineDemo } from 'video-demo/define';
+import { all, attribute, visible } from 'video-demo/ready';
 
 /**
  * The one file that knows this app exists.
@@ -21,6 +21,10 @@ export default defineDemo({
   // output, and is how a corpus says which app it is of.
   name: 'TODO',
 
+  // Filming a URL that is already live instead? Replace this whole `build`
+  // block with one line — `site: 'https://example.com'` — and then delete
+  // `mock` and `clock.anchor` below, along with `mock.ts` itself. See
+  // references/config.md. Everything else in this file stays as it is.
   build: {
     // TODO: whatever your repo already runs for a production build — copy it
     // out of package.json rather than paraphrasing it. In a workspace with
@@ -38,7 +42,7 @@ export default defineDemo({
     // there.
     forbid: [
       // 'api.your-app.com',
-      // /https?:\/\/localhost:8585/,
+      // /https?:\/\/localhost:3000/,
     ],
   },
 

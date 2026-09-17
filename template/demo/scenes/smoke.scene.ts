@@ -1,4 +1,4 @@
-import { scene } from '../studio/scene.ts';
+import { scene } from 'video-demo/scene';
 
 /**
  * The first thing to film, and the only scene that ships with the template.
@@ -20,7 +20,7 @@ import { scene } from '../studio/scene.ts';
  * Run it silent first, because the voice model is a separate concern and a
  * missing one should not stop you proving the capture:
  *
- *     DEMO_VOICE=0 pnpm demo -- --grep smoke
+ *     DEMO_VOICE=0 scripts/demo --grep smoke
  *
  * Then read `demo-out/<theme>/smoke.png`. Not the exit code: a scene that
  * passes while showing a login page, an empty state or the wrong theme has

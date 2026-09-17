@@ -95,6 +95,22 @@ else
   warn "uv not found (only needed to install the local voice)" "curl -LsSf https://astral.sh/uv/install.sh | sh"
 fi
 
+SKILL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# The engine's own runtime, which install.sh puts here. Nothing about the app
+# being filmed is checked: that is discovery, not a dependency.
+if [ -d "$SKILL/node_modules/@playwright/test" ]; then
+  ok 'engine installed'
+else
+  fail 'engine not installed' "$SKILL/scripts/install.sh"
+fi
+
+if [ -L "$SKILL/node_modules/video-demo" ]; then
+  ok 'workspaces can resolve video-demo/*'
+else
+  fail 'the video-demo self-link is missing' "$SKILL/scripts/install.sh"
+fi
+
 VOICE_HOME="${DEMO_VOICE_HOME:-$HOME/.cache/demo-voice}"
 if [ -f "$VOICE_HOME/.venv/bin/python" ] && [ -f "$VOICE_HOME/kokoro.onnx" ] && [ -f "$VOICE_HOME/voices.bin" ]; then
   ok "kokoro voice model installed ($VOICE_HOME)"

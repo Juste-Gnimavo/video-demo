@@ -107,14 +107,27 @@ export function scene(
 
     const shot: SceneContext['shot'] = async (label) => {
       const file = label ? `${name}-${label}.png` : `${name}.png`;
+
       await recorder.pause();
       await stage.actor.overlay(false);
+
+      /**
+       * A still asked for after the scene let go of its subject is a still of
+       * the whole app — but the camera must not be seen going there, so it
+       * happens inside the pause and is undone before capture resumes. A
+       * no-op for the commoner `focus` / `shot` / `unfocus` order, where the
+       * framing is the point of the shot.
+       */
+      const reframe = await stage.actor.wideForStill();
+
       await stage.actor.settle();
       await page.screenshot({
         path: join(themeDir, file),
         animations: 'disabled',
       });
       stills.push(`${theme}/${file}`);
+
+      await reframe();
       await stage.actor.overlay(true);
       await recorder.resume();
       await stage.actor.beat(120);
@@ -136,8 +149,12 @@ export function scene(
       throw error;
     }
 
-    // Whatever a scene was looking at, the clip ends on the whole app.
+    // Whatever a scene was looking at, the clip ends on the whole app. Both
+    // calls: the first says the scene is finished with its subject, the
+    // second is what actually pays for coming out, since nothing follows it
+    // that would.
     await stage.actor.unfocus();
+    await stage.actor.release();
     await stage.actor.say(null);
     await stage.actor.beat(520);
 

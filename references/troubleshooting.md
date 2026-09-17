@@ -164,22 +164,39 @@ the first run's server is now gone mid-flight too.
 `runs.md`). Never free a busy port by killing whatever's on it; take the
 next one instead.
 
+### The camera pulls out and pushes straight back in to the same place
+
+**Cause.** Each beat is paying for its own exit. A scene ends a beat with
+`unfocus`, or a `spotlight` without `stay: true`, the camera pulls all the way
+out, and the next beat immediately pushes back in to within a few pixels of
+where it was. On film it reads as a camera that cannot make up its mind, and
+it is the flaw viewers name first. The scene cannot avoid it by itself: at the
+moment it finishes a beat it has no idea where the next one looks.
+
+**Fix.** Defer the release rather than performing it. `unfocus` records that
+the scene is done with its subject; the engine pays at the first moment
+something genuinely needs the view wide (a still, a plain `say`, a gesture, a
+pointer reaching outside the current framing, the end of the scene), and
+cancels it outright if the next call is another `focus`, which then glides
+from one framing to the next in one movement. Two things have to be true for
+this to be safe, and both are in `actor.ts`: a gesture must force the release
+whether or not one was asked for, because a drag measures in the app's own
+pixels; and `where` must force it when the target sits outside the viewport,
+because at 2x most of the app does, and aiming at a coordinate out there
+misses.
+
 ### `--grep` films the whole corpus instead of the one scene
 
-**Cause.** The package script forwards its arguments through a shell `&&`
-chain. `pnpm demo -- --grep smoke` appends `-- --grep smoke` to the end of
-the whole script string, and the `--` survives into Playwright's own CLI,
-which reads everything after it as positional file filters rather than as
-options. It does not warn. It films every scene — ten minutes and a gigabyte
-in place of a four-second check — and the only evidence is a test count on a
-line nobody rereads.
+**Cause.** Something forwarded the arguments through a shell `&&` chain. A
+separator reaches Playwright's own CLI, which reads everything after it as
+positional file filters rather than as options. It does not warn. It films
+every scene, ten minutes and a gigabyte in place of a four-second check, and
+the only evidence is a test count on a line nobody rereads.
 
-**Fix.** Have the package script call `node demo/run.mjs`, which is handed
-the arguments as an array, drops the separator pnpm leaves behind, and passes
+**Fix.** Use `scripts/demo`, which execs `engine/run.mjs` with the arguments
+as an array, drops any separator a package manager leaves behind, and passes
 the rest to Playwright untouched. A shell `&&` cannot do this: it has no way
-to look at what it is forwarding. If a demo's `package.json` still names
-`pin-build.mjs && playwright test` directly, it predates the runner —
-`scripts/update-studio.mjs` carries it in.
+to look at what it is forwarding.
 
 ### The run dies with `ERR_MODULE_NOT_FOUND` before it films anything
 

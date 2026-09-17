@@ -29,6 +29,7 @@ export type OverlaySide = {
     scale: number,
     ms: number
   ): { tx: number; ty: number; scale: number };
+  still(tx: number, ty: number, scale: number): void;
 };
 
 declare global {
@@ -300,6 +301,35 @@ function overlaySource() {
         );
 
         return scale === 1 ? { tx: 0, ty: 0, scale: 1 } : { tx, ty, scale };
+      },
+
+      /**
+       * Sets the framing outright, for a change the film must not see.
+       *
+       * A still is taken while the screencast is stopped, so the camera can
+       * be somewhere else for it and be put back before capture resumes: the
+       * viewer sees one continuous shot, and the still keeps whatever framing
+       * the scene asked for. None of `zoom`'s machinery applies here and all
+       * of it would hurt. A transition is a second of motion that would have
+       * to happen on film. `will-change` would be left switched on, because a
+       * zero-length transition never fires the `transitionend` that drops it,
+       * and a held frame under that hint shows scaled texture instead of type
+       * at its real size. Reading `offsetHeight` forces the style to land
+       * before the screenshot rather than at the next animation frame, which
+       * is after it.
+       */
+      still(tx: number, ty: number, scale: number) {
+        const app = document.body;
+
+        app.style.transition = 'none';
+        app.style.willChange = 'auto';
+        app.style.transformOrigin = '0 0';
+        app.style.transform =
+          scale === 1
+            ? 'none'
+            : `translate(${tx}px, ${ty}px) scale(${scale})`;
+
+        void app.offsetHeight;
       },
       cursorAt(nx: number, ny: number) {
         place(nx, ny);

@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { Actor } from './actor.ts';
 import type { ConfigServer } from './config.ts';
-import { ANCHOR, STAGE, TRACE_NAV, demo } from './config.ts';
+import { ANCHOR, PINNED, STAGE, TRACE_NAV, demo } from './config.ts';
 import type { Theme } from './define.ts';
 import { installOverlay } from './overlay.ts';
 
@@ -115,13 +115,21 @@ export async function openStage(
    * called before `goto` regardless, and `ctx.signedIn` is what tells it
    * whether a route like `auth/me` should answer as someone or as no one.
    */
-  const server = await demo.mock(page, {
+  const server = (await demo.mock?.(page, {
     reference,
     entry: entryName,
     signedIn,
-  });
+  })) as ConfigServer;
 
-  await page.clock.setFixedTime(reference);
+  /**
+   * Only when the config named an instant. A live site keeps the real clock:
+   * freezing time under a page that fetches relative to "now" breaks it
+   * rather than steadying it, and there is nothing seeded around a fixed
+   * instant to steady it for.
+   */
+  if (PINNED) {
+    await page.clock.setFixedTime(reference);
+  }
   await page.goto(options.path ?? entry.path);
 
   /**

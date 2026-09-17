@@ -1,7 +1,7 @@
 import type { Page, Route } from '@playwright/test';
 
-import type { FixtureApi } from '../e2e/support/fixtures.ts';
-import { createFixtureApi, eventDto } from '../e2e/support/fixtures.ts';
+import type { FixtureApi } from './app/e2e/support/fixtures.ts';
+import { createFixtureApi, eventDto } from './app/e2e/support/fixtures.ts';
 import {
   DEMO_ACCOUNTS,
   DEFAULT_CALENDAR,
@@ -16,7 +16,7 @@ import { publicLink, publicPage } from './seed/public-booking.ts';
 import { createDemoTasks } from './seed/tasks.ts';
 import { createDemoDiary } from './seed/week.ts';
 import { HANDLE, VIEWER } from './seed/viewer.ts';
-import type { MockContext } from './studio/define.ts';
+import type { MockContext } from 'video-demo/define';
 
 /**
  * The whole server, for the length of a film.
@@ -78,8 +78,7 @@ function calendarsPayload() {
 /**
  * One rule, and it is the one worth showing: the studio diary projected onto
  * the employer's calendar as opaque time with no titles on it, so a colleague
- * looking for a slot sees a wall and not a physio appointment. See ADR 0030.
- */
+ * looking for a slot sees a wall and not a physio appointment. */
 const BLOCK_RULES = [
   {
     id: 'blk_personal_to_work',
@@ -92,7 +91,7 @@ const BLOCK_RULES = [
 ];
 
 const MCP_KEY = {
-  preview: 'cal_live_7Qa2…f19d',
+  preview: 'cal_demo_0000…0000',
   createdAt: '2026-09-02T14:12:00.000Z',
   lastUsedAt: '2026-09-15T21:44:00.000Z',
 };
@@ -105,28 +104,28 @@ const MCP_KEY = {
  */
 const PLACES = [
   {
-    id: 'plc_kings',
-    main: 'Kings Place',
-    secondary: '90 York Way, London N1 9AG',
-    description: 'Kings Place, 90 York Way, London N1 9AG',
+    id: 'plc_atrium',
+    main: 'The Atrium',
+    secondary: '4 Lantern Way, Northgate',
+    description: 'The Atrium, 4 Lantern Way, Northgate',
   },
   {
-    id: 'plc_trullo',
-    main: 'Trullo',
-    secondary: '300-302 St Paul’s Road, London N1 2LH',
-    description: 'Trullo, 300-302 St Paul’s Road, London N1 2LH',
+    id: 'plc_fennel',
+    main: 'Fennel & Co',
+    secondary: '81 Harbour Row, Northgate',
+    description: 'Fennel & Co, 81 Harbour Row, Northgate',
   },
   {
-    id: 'plc_eagle',
-    main: 'The Eagle',
-    secondary: '159 Farringdon Road, London EC1R 3AL',
-    description: 'The Eagle, 159 Farringdon Road, London EC1R 3AL',
+    id: 'plc_quarry',
+    main: 'The Quarry Rooms',
+    secondary: '12 Kiln Street, Eastbank',
+    description: 'The Quarry Rooms, 12 Kiln Street, Eastbank',
   },
   {
     id: 'plc_lido',
-    main: 'London Fields Lido',
-    secondary: 'London Fields West Side, London E8 3EU',
-    description: 'London Fields Lido, London Fields West Side, London E8 3EU',
+    main: 'Eastbank Lido',
+    secondary: 'Eastbank Fields, Eastbank',
+    description: 'Eastbank Lido, Eastbank Fields, Eastbank',
   },
 ];
 
@@ -196,7 +195,7 @@ export async function mock(page: Page, ctx: MockContext): Promise<DemoServer> {
   await page.route('**/api/v1/mcp/key', (route) => {
     if (route.request().method() === 'POST') {
       return json(route, {
-        key: 'cal_live_7Qa2NxHc0vTbKpR4sZmEjWu6yLdQf19d',
+        key: 'cal_demo_000000000000000000000000000000000000',
         ...MCP_KEY,
       });
     }
@@ -323,7 +322,7 @@ export async function mock(page: Page, ctx: MockContext): Promise<DemoServer> {
    * behind it at all.
    *
    * `/@user/<slug>` resolves a one-time link first and a standing link
-   * second (ADR 0034), which is why both come back from `publicLink` rather
+   * second, which is why both come back from `publicLink` rather
    * than from two handlers: the address does not say which kind it is, and
    * the `kind` discriminant in the answer is how the page finds out.
    */

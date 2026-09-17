@@ -36,7 +36,7 @@ export {
 
 export type Door = 'tasks' | 'schedule' | 'availability';
 
-/** A door in the 48px rail. Opening one is a toggle — see ADR 0030. */
+/** A door in the 48px rail. Opening one is a toggle. */
 export function door(page: Page, which: Door): Locator {
   return page.getByTestId(`${which}-toggle`);
 }

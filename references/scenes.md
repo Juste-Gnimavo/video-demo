@@ -122,6 +122,28 @@ control will hide the one declined RSVP on a six-guest meeting until that
 control is expanded. Deciding a scene "shows" a state and confirming the
 still actually shows it are two different steps — see the next rule.
 
+**`unfocus` is a hint, not a movement, so write beats without worrying about
+the camera bouncing.** A beat that ends with `unfocus` (or a `spotlight`
+without `stay: true`) does not pull the camera out there and then. It records
+that the scene is finished with that subject, and the engine pays for coming
+out at the first moment something actually needs the whole app on screen: a
+`shot`, a plain `say`, a drag or a scroll, a pointer reaching for something
+the current framing cannot see, or the end of the scene. If instead the next
+thing is another `focus` or `spotlight`, the release is cancelled and the
+camera glides from one framing straight to the next.
+
+This exists because the alternative was the most-noticed flaw in the first
+corpus. Four beats about the same panel filmed as push in, pull out, push in
+to within thirty-five pixels of where it just was, pull out, and so on: eight
+camera movements where four would do, and a second of motion each time whose
+only purpose was to be undone. Measured on the AI scene, the coalescing took
+it from eight moves to six, the clip from 43.0s to 41.5s, and the paint rate
+from 44.9fps to 49.0 simply because there were fewer transitions to draw.
+
+What it does *not* do is decide your framing for you. Two beats at the same
+scale about neighbouring things still collapse to no camera move at all (see
+`framed`), and two beats at different scales still move, once.
+
 **Where the app has its own timer, the gesture goes inside it and the words
 come after.** This is the same rule as the first one, but it stops being a
 matter of pacing and becomes a hard constraint. The calendar's undo lives for

@@ -36,9 +36,28 @@ export type Entry = {
 };
 
 export type DemoConfig<Server = unknown> = {
-  /** Names the voice cache directory and shows up in the manifest. */
+  /** Shows up in the manifest and in a run's own output. */
   name: string;
-  build: {
+  /**
+   * A URL that is already live, filmed as it stands. The other half of
+   * `build`, and exactly one of the two is required.
+   *
+   * This is the mode for a site you did not build here: a marketing page, a
+   * public app, a deploy preview. There is nothing to compile and nothing to
+   * serve, so `build`, `mock` and `clock` all become unnecessary and the
+   * engine will not ask for them.
+   *
+   * It costs the two guarantees the build mode exists to give, and they are
+   * worth naming before you choose it. The film is of whatever the site
+   * happens to be that minute, so a corpus is no longer reproducible: the
+   * same command next month makes a different video, and a scene pointing at
+   * a button somebody renamed fails. And nothing intercepts the network, so
+   * anything the page shows a signed-in visitor is filmed, including real
+   * names and addresses. Public pages, then, or a staging URL with invented
+   * data behind it.
+   */
+  site?: string;
+  build?: {
     /** Whatever the repo already runs for a production build. Run from `APP_ROOT`. */
     command: string;
     /** Where the build writes, relative to `APP_ROOT`. */
@@ -54,7 +73,14 @@ export type DemoConfig<Server = unknown> = {
   };
   /** Default `{ width: 1920, height: 1080 }`. */
   stage?: { width: number; height: number };
-  clock: { anchor: string; timezone: string; locale?: string };
+  /**
+   * Required with `build`, where a fixed instant is what makes a corpus
+   * reproducible. Optional with `site`: pinning a live page's clock can break
+   * it (a build fetching relative to a date it cannot have, hydration
+   * disagreeing with the server), so the page is left on the real one unless
+   * this says otherwise. `timezone` and `locale` still apply either way.
+   */
+  clock?: { anchor?: string; timezone: string; locale?: string };
   /** Default `['dark']`. */
   themes?: Theme[];
   /**
@@ -88,8 +114,13 @@ export type DemoConfig<Server = unknown> = {
    * a static import at the top of `demo.config.ts`: this config is loaded by
    * plain Node too, and that resolver cannot follow an extensionless specifier
    * the way the test runner's can. The template's own stub shows the shape.
+   *
+   * Required in `build` mode and pointless in `site` mode, where the site
+   * answers for itself. Left out of a build-mode config, the app would reach
+   * a real network from a filmed browser, which is the thing this engine
+   * exists to prevent.
    */
-  mock: (page: Page, ctx: MockContext) => Promise<Server>;
+  mock?: (page: Page, ctx: MockContext) => Promise<Server>;
   voice?: { name?: string; speed?: number; saidAs?: [RegExp, string][] };
   /**
    * The order scenes appear in the manifest and the stitched tour.

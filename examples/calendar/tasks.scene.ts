@@ -1,4 +1,4 @@
-import { scene } from '../studio/scene.ts';
+import { scene } from 'video-demo/scene';
 import { door } from '../ui.ts';
 
 /**

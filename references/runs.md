@@ -8,6 +8,15 @@ It films 4K video of the wrong page, cleanly, and the scenes that depended on
 what should have been there fail one by one, later, in a way that looks like
 a broken app rather than a broken setup.
 
+## Two modes, and only one of them has a server
+
+`build` compiles the app here and serves a private copy; `site` opens a URL
+that is already live. Everything below about pinning, serving and verifying
+the bundle is the `build` mode. In `site` mode there is no build step (the
+runner skips it, and `pin-build.mjs` exits saying so), no `webServer` block in
+the Playwright config, and no mocks: the site is the server. The isolation
+knobs still matter, except `DEMO_PORT`, which nothing is listening on.
+
 ## Film a pinned build, never a dev server
 
 A studio does not attach to `pnpm dev` or whatever your dev server is
@@ -175,28 +184,29 @@ because it plays back looking like a real bug in the app.
 
 ## One entry point, because a shell `&&` cannot read its own arguments
 
-A demo's `package.json` gets two scripts, `demo` and `demo:doctor`, and the
-first is `node demo/run.mjs` rather than the two commands it runs.
+`scripts/demo` is the only command, and it is a script rather than the two
+commands it runs.
 
 The obvious spelling is `"demo": "node demo/pin-build.mjs && playwright test
 --config=demo/playwright.demo.ts"`, and it quietly breaks the first command
-anybody types. `pnpm demo -- --grep smoke` appends `-- --grep smoke` to the end
-of the whole script string; the `--` reaches Playwright's CLI, which reads
-everything after it as positional file filters rather than as options, and
-does not complain. All twenty-eight scenes film. That is ten minutes and a
-gigabyte in place of the four-second check that was asked for, and the only
-evidence is a test count on a line nobody rereads.
+anybody types: a separator reaches Playwright's CLI, which reads everything
+after it as positional file filters rather than as options, and does not
+complain. Every scene films. That is ten minutes and a gigabyte in place of
+the four-second check that was asked for, and the only evidence is a test
+count on a line nobody rereads.
 
-`run.mjs` is handed the arguments as an array, so it can drop the separator
-pnpm leaves behind and pass the rest through untouched. It also owns the two
-steps of a run, which is where `DEMO_BUILD=0` lives: skipping the rebuild is
-the difference between a twenty-second iteration and a four-minute one while
-writing a scene, and the default is still to build, because a corpus of the
-code in the tree is the point.
+`engine/run.mjs`, which it execs, is handed the arguments as an array, so it
+can drop any separator a package manager leaves behind and pass the rest
+through untouched. It also owns the two steps of a run, which is where
+`DEMO_BUILD=0` lives: skipping the rebuild is the difference between a
+twenty-second iteration and a four-minute one while writing a scene, and the
+default is still to build, because a corpus of the code in the tree is the
+point.
 
-`doctor.sh` is copied into `demo/` by the scaffold rather than referenced where
-the skill happens to be installed, so the script in `package.json` is a path in
-the repo instead of a path on one machine.
+It is also the only thing that knows where a workspace is. Every workspace
+records the repo it belongs to in `.origin`, so running `scripts/demo` from
+anywhere inside that repo finds it again with no flag, and `--project` names
+one explicitly.
 
 ## Environment variable reference
 

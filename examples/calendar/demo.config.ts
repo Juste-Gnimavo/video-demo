@@ -1,5 +1,5 @@
-import { defineDemo } from './studio/define.ts';
-import { all, attribute, networkIdle, tallerThan, visible } from './studio/ready.ts';
+import { defineDemo } from 'video-demo/define';
+import { all, attribute, networkIdle, tallerThan, visible } from 'video-demo/ready';
 
 /**
  * The one file that knows this app is a calendar.
@@ -24,7 +24,7 @@ export default defineDemo({
      * these before a frame is filmed, because the failure is silent and
      * points anywhere but here.
      */
-    forbid: [/https?:\/\/localhost:8585/, 'app.kamran.fyi'],
+    forbid: [/https?:\/\/localhost:8585/, 'api.example.com'],
   },
 
   stage: { width: 1920, height: 1080 },
@@ -41,7 +41,7 @@ export default defineDemo({
 
   /**
    * `app/root.tsx` reads this key in a script that runs before React mounts,
-   * precisely so no dark viewer ever sees a light frame (ADR 0014's
+   * precisely so no dark viewer ever sees a light frame (the app's own notes's
    * neighbour). Writing it here is what keeps the recorder from catching the
    * frame that script exists to prevent.
    */

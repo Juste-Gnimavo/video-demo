@@ -69,7 +69,42 @@ export class Actor {
   }
 
   /** Where a target is right now, in viewport pixels. */
+  /**
+   * Where the pointer should aim for, in screen pixels.
+   *
+   * This is also where a deferred release gets paid when it has to be. A
+   * click while pushed in is normally fine — `boundingBox` reports the
+   * post-transform rectangle, so the coordinate is the one the thing is
+   * actually drawn at — but only while the target is still on screen. Scaled
+   * up by two, most of the app is outside the viewport, and aiming at a
+   * coordinate out there either misses or lands on whatever is at the edge.
+   * Every pointer operation measures through here, so this is the one place
+   * that has to know.
+   */
   async where(target: Target, at: Point | 'center' = 'center'): Promise<Point> {
+    const point = await this.measure(target, at);
+    if (!this.pendingRelease || this.inShot(point)) {
+      return point;
+    }
+
+    await this.release();
+    return this.measure(target, at);
+  }
+
+  /** Whether a screen point is somewhere the pointer can actually reach. */
+  private inShot(point: Point): boolean {
+    return (
+      point.x >= 0 &&
+      point.x <= this.width &&
+      point.y >= 0 &&
+      point.y <= this.height
+    );
+  }
+
+  private async measure(
+    target: Target,
+    at: Point | 'center' = 'center'
+  ): Promise<Point> {
     const found = this.locate(target);
     if (!('boundingBox' in found)) {
       return found;
@@ -282,6 +317,14 @@ export class Actor {
       return;
     }
 
+    /**
+     * A line with no subject is a line about the whole screen, so it is one
+     * of the things a deferred release is waiting for. `spotlight` narrates
+     * through `onNarrate` directly and never comes through here, so a line
+     * that *is* about a subject cannot accidentally throw the framing away.
+     */
+    await this.release();
+
     this.onNarrate?.(text);
 
     /**
@@ -311,6 +354,11 @@ export class Actor {
    * keystroke to land, so it says so and the measurement stops guessing.
    */
   onMotion?: (state: 'start' | 'end') => void;
+
+  /**
+   * A release asked for and not yet paid for — see `unfocus` and `release`.
+   */
+  private pendingRelease: { ms?: number } | null = null;
 
   private zoomed = false;
   /** What the pointer is currently pointing at, in app coordinates. */
@@ -367,6 +415,15 @@ export class Actor {
     if (!box) {
       return;
     }
+
+    /**
+     * Whatever release was owed, it is not owed now: `zoom` is absolute, so
+     * the camera can go from this framing to the next one directly, and
+     * paying to pull out first would put a second of pointless motion in the
+     * middle of that move. Cancelled whether or not the subject turns out to
+     * be framed already.
+     */
+    this.pendingRelease = null;
 
     const subject = this.toApp({
       x: box.x + box.width / 2,
@@ -440,18 +497,91 @@ export class Actor {
     );
   }
 
+  /**
+   * Says the scene is done with this subject. Does not move the camera yet.
+   *
+   * A beat ends, the camera pulls all the way out, and the next beat pushes
+   * straight back in to within a hair of where it just was. On film that
+   * reads as a camera that cannot make up its mind, and it was the single
+   * most-noticed flaw in the first corpus: the zoom out is a second of
+   * motion whose only purpose is to be undone.
+   *
+   * The scene cannot avoid it by itself, because at the moment it finishes a
+   * beat it does not know where the next one looks. But the engine finds out
+   * one call later, so the release is recorded here and paid for at the first
+   * moment something actually needs the view wide: a still, a line about the
+   * whole screen, a gesture, a pointer reaching outside the current framing,
+   * or the end of the scene. If instead the next thing is another `focus`,
+   * the release is cancelled and the camera glides from this framing to the
+   * next one, which is one movement rather than three.
+   */
   async unfocus(options: { ms?: number } = {}) {
     if (!this.zoomed) {
       return;
     }
 
-    const ms = options.ms ?? 950;
+    this.pendingRelease = options;
+  }
+
+  /**
+   * Takes the camera wide for a still, without the film ever seeing it move.
+   *
+   * A scene that has let go of its subject and then asks for a still is
+   * asking for a still of the whole app. Paying the release to get one was
+   * the obvious way to do that and it put the worst kind of motion in the
+   * film: a pull-out whose only cause was a screenshot, landing in the middle
+   * of a sequence the camera should have held. It read as the camera zooming
+   * out to let you type.
+   *
+   * A still is taken with the screencast stopped, though, so the framing can
+   * change for the duration and change back before capture resumes. Nothing
+   * is recorded in between, the scene's own state is untouched — the release
+   * is still owed afterwards — and the still is framed the way the scene
+   * asked. Returns the undo, which the caller must run before resuming.
+   */
+  async wideForStill(): Promise<() => Promise<void>> {
+    if (!this.pendingRelease || !this.zoomed) {
+      return async () => {};
+    }
+
+    const held = this.view;
+    await this.page.evaluate(() => window.__demo?.still(0, 0, 1));
+
+    return async () => {
+      await this.page.evaluate(
+        (view) => window.__demo?.still(view.tx, view.ty, view.scale),
+        held
+      );
+    };
+  }
+
+  /**
+   * Pays for a deferred release, if one is owed and still owed.
+   *
+   * Everything that needs the whole app on screen calls this rather than
+   * `unfocus`, so that a scene which asked to come out and then changed its
+   * mind never pays for the move. Cheap and idempotent when nothing is
+   * pending, which is most of the time.
+   */
+  async release(): Promise<void> {
+    const pending = this.pendingRelease;
+    this.pendingRelease = null;
+
+    if (!pending || !this.zoomed) {
+      return;
+    }
+
+    await this.widen(pending.ms ?? 950);
+  }
+
+  private async widen(ms: number) {
     const next = await this.page.evaluate(
       (at) => window.__demo?.zoom(0, 0, 1, at.ms),
       { ms }
     );
     this.view = next ?? { tx: 0, ty: 0, scale: 1 };
     this.zoomed = false;
+    this.pendingRelease = null;
 
     /**
      * The pointer keeps hold of what it was pointing at while the view
@@ -488,8 +618,10 @@ export class Actor {
   }
 
   private async unzoomForGesture() {
+    this.pendingRelease = null;
+
     if (this.zoomed) {
-      await this.unfocus({ ms: 600 });
+      await this.widen(600);
     }
   }
 

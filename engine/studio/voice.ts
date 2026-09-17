@@ -54,10 +54,11 @@ const VOICES = join(VOICE_HOME, 'voices.bin');
 const LINES = join(VOICE_HOME, 'lines');
 
 /**
- * The settings `arikchakma/gpu-time` narrates with, adopted wholesale as the
- * engine's own defaults. `demo.config.ts`'s own `voice` commits an app to a
- * choice; `DEMO_VOICE_NAME`/`DEMO_VOICE_SPEED` override either one at film
- * time, the same way they'd override these defaults with no config at all.
+ * The voice and pace, adopted from the settings `arikchakma/gpu-time`
+ * narrates with, since they were already tuned and sound better than anything
+ * arrived at here. `demo.config.ts`'s own `voice` commits an app to a choice;
+ * `DEMO_VOICE_NAME`/`DEMO_VOICE_SPEED` override either one at film time, the
+ * same way they'd override these defaults with no config at all.
  *
  * Not only the voice. The three numbers under it are the difference between
  * a model reading a string and something worth listening to: a shade under
@@ -69,16 +70,14 @@ const LINES = join(VOICE_HOME, 'lines');
 const VOICE = process.env.DEMO_VOICE_NAME ?? demo.voice?.name ?? 'af_heart';
 const LANG = process.env.DEMO_VOICE_LANG ?? 'en-us';
 /**
- * A shade quicker than a polished voice-over, and with shorter joints.
+ * Full speed, with short joints.
  *
- * 0.92 with a fifth of a second between sentences is the pace of something
- * scripted and read aloud. The brief here is somebody talking through their
- * own screen, which is faster and runs its clauses together more, so the
- * speed comes up to 1 and the pauses come down by default. The words matter
- * more than either number: this voice reads plain speech as plain speech and
- * literary prose as literary prose, so a scene should say "your tasks live
- * right here" rather than "one door for everything that has no place on the
- * grid yet".
+ * Not a taste call: a demo line is one sentence about one thing, and at less
+ * than full speed the deliberateness reads as a recording rather than someone
+ * talking. The pauses matter more than the rate. Kokoro defaults to a quarter
+ * of a second between sentences and a tenth between clauses, which is
+ * measured against prose being read aloud; over a demo it drags, so both are
+ * tighter here. Every number is overridable per app and per run.
  */
 const SPEED = Number(process.env.DEMO_VOICE_SPEED ?? demo.voice?.speed ?? 1);
 const SENTENCE_PAUSE = Number(process.env.DEMO_VOICE_SENTENCE_PAUSE ?? 0.14);

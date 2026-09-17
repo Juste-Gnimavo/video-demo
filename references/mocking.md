@@ -5,12 +5,20 @@ gets answered. There is no API, no database, and no third party behind a demo
 run — just `page.route` handlers and a diary held in memory for the length of
 the test.
 
-It lives in `demo/mock.ts`, and `demo.config.ts` reaches it with a dynamic
-import rather than a static one, because the config is read by plain Node as
-well as by the runner (see [config.md](config.md)). The upside is that this
-file has no import restrictions at all: whatever Playwright can load — your
-app's own packages, the e2e suite's fixtures, a workspace module full of
-extensionless specifiers — it can import.
+It lives in your workspace as `mock.ts`, and `demo.config.ts` reaches it with
+a dynamic import rather than a static one, because the config is read by plain
+Node as well as by the runner (see [config.md](config.md)).
+
+**Reuse the app's data fixtures; never a file that imports
+`@playwright/test`.** The first half is the point of this page: a fixture API
+the e2e suite already trusts models a write the way the real route does, and
+copying it would drift. The second half is not a preference. The engine loads
+Playwright from the skill and the app loads it from its own `node_modules`;
+two physical copies in one run is an error Playwright refuses outright, and it
+refuses for the whole corpus, because every file under `scenes/` is loaded to
+collect tests before `--grep` filters any of them. Data fixtures are usually
+clean (they deal in objects, not pages). Locator helpers usually are not, so
+those belong in your workspace's own `ui.ts`.
 
 ## Why, twice over
 

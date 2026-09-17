@@ -1,8 +1,49 @@
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import demo from '../demo.config.ts';
-import type { Theme } from './define.ts';
+import type { DemoConfig, Theme } from './define.ts';
+
+/**
+ * The app's own config, found by absolute path rather than by a relative
+ * import.
+ *
+ * This used to be `import demo from '../demo.config.ts'`, which is only
+ * correct while the engine and the app's config are neighbours — that is, while
+ * the engine is copied into the app's repo. It is not, any more: one clone of
+ * the skill films every project on the machine, and each project's config lives
+ * in its own workspace. A relative import cannot reach that, and the
+ * alternative of symlinking the engine beside the config fails silently in
+ * the worst way: Node resolves a symlinked module against its real path, so
+ * `../demo.config.ts` would resolve next to the engine, find the template's
+ * own stub, and film the wrong app while passing every check.
+ *
+ * So the path arrives in the environment, set by `scripts/demo`, and is
+ * awaited at the top level — which keeps every derived constant below
+ * synchronous for the dozen modules that read them.
+ */
+const CONFIG_PATH = process.env.DEMO_CONFIG;
+
+if (!CONFIG_PATH) {
+  throw new Error(
+    'DEMO_CONFIG is unset, so there is no app to film. Start a run with ' +
+      "the skill's own entry point (`scripts/demo`) rather than by calling " +
+      'playwright directly.'
+  );
+}
+
+const loaded = (await import(pathToFileURL(CONFIG_PATH).href)) as {
+  default: DemoConfig;
+};
+
+const demo = loaded.default;
+
+/**
+ * The workspace: where this project's config, scenes and corpus live. Its own
+ * directory by default (`~/.video-demo/<key>`), or wherever `--project` put
+ * it, including inside the app's repo for a team that commits scenes.
+ */
+export const PROJECT =
+  process.env.DEMO_PROJECT ?? CONFIG_PATH.replace(/\/[^/]+$/, '');
 
 /**
  * Every number the studio is allowed to have an opinion about, in one place.
@@ -33,7 +74,61 @@ export { demo };
  * reads it off `demo.mock` itself instead of naming a type this file would
  * otherwise have to import from somewhere app-specific.
  */
-export type ConfigServer = Awaited<ReturnType<typeof demo.mock>>;
+export type ConfigServer = Awaited<ReturnType<NonNullable<typeof demo.mock>>>;
+
+/**
+ * Which of the two things a run is filming, decided once here.
+ *
+ * `build` compiles the app in this repo, serves the result from a private
+ * copy and answers every request in-process: reproducible, private, and the
+ * mode everything else in this skill is written for. `site` opens a URL that
+ * is already live and films what is there: nothing to build, nothing to mock,
+ * and neither of those guarantees. Exactly one, because a config that names
+ * both has not decided what it is filming.
+ */
+const SITE_URL = demo.site?.trim();
+
+if (SITE_URL && demo.build) {
+  throw new Error(
+    'demo.config.ts: name either `site` (film a live URL) or `build` ' +
+      '(build and serve this repo), not both.'
+  );
+}
+
+if (!SITE_URL && !demo.build) {
+  throw new Error(
+    'demo.config.ts: needs either `site` (film a live URL) or `build` ' +
+      '(build and serve this repo).'
+  );
+}
+
+if (SITE_URL && !/^https?:\/\//.test(SITE_URL)) {
+  throw new Error(
+    `demo.config.ts: site must be an absolute http(s) URL, got "${SITE_URL}"`
+  );
+}
+
+/**
+ * An origin, not a page. Playwright resolves each entry's `path` against the
+ * origin of `baseURL` and drops anything after it, so a site of
+ * `https://example.com/pricing` with an entry at `/` silently films the home
+ * page instead — a wrong film that passes every check, which is the worst
+ * kind. Refused here, where the message can say where the path belongs.
+ */
+if (SITE_URL) {
+  const { pathname, search, hash } = new URL(SITE_URL);
+  if (pathname !== '/' || search || hash) {
+    throw new Error(
+      `demo.config.ts: site must be an origin, got "${SITE_URL}".\n` +
+        `  Use site: "${new URL(SITE_URL).origin}" and put the rest in an ` +
+        `entry:\n` +
+        `    entries: { app: { path: "${pathname}${search}${hash}", ready: networkIdle() } }`
+    );
+  }
+}
+
+/** The live URL being filmed, or null when this run builds and serves. */
+export const SITE = SITE_URL ?? null;
 
 function must<T>(value: T | undefined, field: string): T {
   if (value === undefined) {
@@ -43,11 +138,20 @@ function must<T>(value: T | undefined, field: string): T {
 }
 
 must(demo.name, 'name');
-must(demo.build?.command, 'build.command');
-must(demo.build?.output, 'build.output');
-must(demo.clock?.anchor, 'clock.anchor');
 must(demo.clock?.timezone, 'clock.timezone');
 must(demo.entries?.app, 'entries.app');
+
+/**
+ * What `build` mode needs and `site` mode does not. A live URL has nothing to
+ * compile, nothing to serve, no network of ours to answer and no instant to
+ * be pinned to, so asking for any of it would be asking for a lie.
+ */
+if (!SITE) {
+  must(demo.build?.command, 'build.command');
+  must(demo.build?.output, 'build.output');
+  must(demo.clock?.anchor, 'clock.anchor');
+  must(demo.mock, 'mock');
+}
 
 /**
  * The app's own root — one level above wherever `demo/` sits inside it — and
@@ -57,7 +161,15 @@ must(demo.entries?.app, 'entries.app');
  * different working directories between them; a path relative to whichever
  * one was typed is a path nobody can find twice.
  */
-export const APP_ROOT = fileURLToPath(new URL('../../', import.meta.url));
+/** Where the engine itself lives, for the one place that has to spawn a sibling. */
+export const ENGINE_DIR = fileURLToPath(new URL('../', import.meta.url));
+
+/**
+ * The repo being filmed, in `build` mode. `scripts/demo` reads it from the
+ * workspace's `.origin`; in `site` mode there is no repo and it falls back to
+ * the workspace so that nothing downstream has to special-case it.
+ */
+export const APP_ROOT = process.env.DEMO_APP_ROOT ?? PROJECT;
 
 export const STAGE = {
   width: Number(process.env.DEMO_WIDTH ?? demo.stage?.width ?? 1920),
@@ -84,12 +196,29 @@ export const VIDEO_SCALE = Number(process.env.DEMO_VIDEO_SCALE ?? 1);
 export const STILL_SCALE = Number(process.env.DEMO_STILL_SCALE ?? 2);
 
 /** The zone every seeded instant is stated in, and the page is pinned to. */
-export const TZ = demo.clock.timezone;
+export const TZ = demo.clock?.timezone ?? 'UTC';
 
-export const LOCALE = demo.clock.locale ?? 'en-US';
+export const LOCALE = demo.clock?.locale ?? 'en-US';
 
-/** The instant the whole corpus is filmed at — see `demo.config.ts`'s own `clock.anchor` comment for why it's a fixed literal. */
-export const ANCHOR = new Date(demo.clock.anchor);
+/**
+ * Whether the page's own clock is frozen.
+ *
+ * A fixed instant is what makes a built corpus reproducible, so `build` mode
+ * requires one. A live site gets the real clock unless its config asks
+ * otherwise, because freezing time under a page that fetches relative to
+ * "now", or hydrates against a server that did not, breaks the page rather
+ * than steadying it.
+ */
+export const PINNED = Boolean(demo.clock?.anchor);
+
+/**
+ * The instant the corpus is filmed at. A literal in `build` mode (see
+ * `demo.config.ts`'s own `clock.anchor` comment); the real now in `site`
+ * mode, where there is nothing to seed around and nothing to reproduce.
+ */
+export const ANCHOR = demo.clock?.anchor
+  ? new Date(demo.clock.anchor)
+  : new Date();
 
 /**
  * The rate the capture can actually sustain at this resolution, not a wish.
@@ -163,14 +292,20 @@ export const THEMES = (
  * rather than shared: see `reuseExistingServer` in `playwright.demo.ts`.
  */
 export const PORT = Number(process.env.DEMO_PORT ?? 5499);
-export const BASE_URL = `http://localhost:${PORT}`;
+
+/**
+ * Where the browser points. The private copy this run serves, or the live URL
+ * it was told to film — in which case no server of ours is involved at all
+ * and `DEMO_PORT` is moot.
+ */
+export const BASE_URL = SITE ?? `http://localhost:${PORT}`;
 
 /**
  * Where the corpus lands, and where frames wait to be encoded. Both are
  * absolute, resolved from `APP_ROOT` rather than `process.cwd()` — see the
  * comment on `APP_ROOT` for why that distinction is load-bearing.
  */
-export const OUT_DIR = process.env.DEMO_OUT ?? join(APP_ROOT, 'demo-out');
+export const OUT_DIR = process.env.DEMO_OUT ?? join(PROJECT, 'demo-out');
 
 /**
  * Inside the output directory, so `DEMO_OUT` isolates a whole run.

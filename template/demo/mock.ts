@@ -1,6 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 
-import type { MockContext } from './studio/define.ts';
+import type { MockContext } from 'video-demo/define';
 
 /**
  * Every request the app makes during a film, answered in this process.

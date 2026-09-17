@@ -17,7 +17,7 @@ export default defineDemo({
   build: {
     command: 'VITE_API_URL=/api pnpm run build',
     output: 'build/client',
-    forbid: [/https?:\/\/localhost:8585/, 'app.kamran.fyi'],
+    forbid: [/https?:\/\/localhost:8585/, 'api.example.com'],
   },
   stage: { width: 1920, height: 1080 },
   clock: {
@@ -65,7 +65,35 @@ Names the corpus, and shows up in the manifest and any per-run temp paths
 the engine mints. Pick the app's own name; there's no default because
 there's no safe guess.
 
-## `build` — required
+## `site` — a URL, instead of `build`
+
+One of `site` and `build` is required, and naming both is an error: a config
+that does not know whether it is filming this repo or a live address has not
+decided what it is.
+
+```ts
+site: 'https://time.fyi',
+clock: { timezone: 'Europe/London' },
+```
+
+An absolute http(s) URL. With it, three of the otherwise-required fields go
+away: `build` (nothing to compile), `mock` (the site answers for itself, and
+`mock.ts` need not exist), and `clock.anchor` (the page keeps the real clock,
+because freezing time under a page that fetches relative to "now" or hydrates
+against a server that did not breaks it rather than steadying it). `timezone`
+and `locale` still apply, since those are the browser's, not the page's.
+
+Scene `path`s resolve against it, so `path: '/'` and `path: '/timezones'` mean
+what they look like. No server of ours is started and `DEMO_PORT` is moot.
+
+What you give up is precisely what the build mode was for. The film is of
+whatever was served that minute, so the corpus is not reproducible and a
+scene pointing at a word somebody rewrites fails on the next run. And nothing
+intercepts the network, so whatever the page shows its visitor is filmed,
+including real data if the browser is signed in. Public pages, or a staging
+URL with invented data behind it.
+
+## `build` — required unless `site` is set
 
 The corpus has to be reproducible, and a dev server's module graph belongs to
 whoever is editing source — a keystroke in another terminal invalidates the
@@ -96,7 +124,7 @@ headroom), stills at `DEMO_STILL_SCALE` (2x, for retina). Leave it alone
 unless the app's layout genuinely breaks below 1920 wide; every locator's
 bounding box moves with it.
 
-## `clock` — required
+## `clock` — required, `anchor` only in `build` mode
 
 A demo asset is only worth automating if the same command produces the same
 file next month, so every field here is a literal, never read from the
@@ -195,7 +223,7 @@ actually renders — usually `networkIdle()`, since a guest booking page has
 no grid and no attribute to poll. Nothing in the engine branches on
 "public"; it only ever asks an entry for its own `ready`.
 
-## `mock(page, ctx)` — required
+## `mock(page, ctx)` — required in `build` mode, unused in `site` mode
 
 Where every `page.route` handler your app needs gets registered — see
 [mocking.md](mocking.md) for the how and why; this is just the signature.
@@ -260,8 +288,10 @@ cryptic syntax error on ordinary-looking TypeScript is usually one of these
 three.
 
 **Every filesystem path resolves from the app root, never `process.cwd()`.**
-The app root is the directory `demo/` sits in, worked out from
-`import.meta.url` rather than from where the command was typed. `pnpm demo`,
+The app root is the repo being filmed. It reaches the engine as
+`DEMO_APP_ROOT`, set by `scripts/demo` from the `appRoot` your workspace
+recorded in `.origin` when it was scaffolded, rather than from where the
+command was typed. `scripts/demo`,
 `pnpm --filter <pkg> demo`, and a bare `playwright test` from inside `demo/`
 are all normal ways to start a run, with three different working directories
 between them, and a `cwd`-relative `build.output` would land somewhere

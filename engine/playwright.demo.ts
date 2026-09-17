@@ -1,10 +1,14 @@
+import { join } from 'node:path';
+
 import { defineConfig, devices } from '@playwright/test';
 
 import {
-  APP_ROOT,
+  ENGINE_DIR,
+  PROJECT,
   BASE_URL,
   LOCALE,
   PORT,
+  SITE,
   STAGE,
   STILL_SCALE,
   THEMES,
@@ -30,7 +34,12 @@ import {
 process.env.TZ = TZ;
 
 export default defineConfig({
-  testDir: './scenes',
+  /**
+   * The scenes belong to the project being filmed, not to the engine, so this
+   * is an absolute path into the workspace rather than a path beside this
+   * config. One clone of the skill films every project on the machine.
+   */
+  testDir: join(PROJECT, 'scenes'),
   testMatch: '**/*.scene.ts',
   fullyParallel: true,
   /** `WORKERS` in `studio/config.ts` carries the reasoning: resolution, not taste. */
@@ -91,26 +100,33 @@ export default defineConfig({
   })),
   globalSetup: './studio/run-id.ts',
   globalTeardown: './studio/stitch.ts',
-  webServer: {
-    command: `node demo/serve.mjs demo/.build ${PORT}`,
-    url: BASE_URL,
-    cwd: APP_ROOT,
-    /**
-     * Never reused, and never a dev server.
-     *
-     * A corpus run died mid-flight to a dev server whose module graph belongs
-     * to whoever is editing the source: one run when another session touched
-     * the app's own source, one when an install rewrote `node_modules`
-     * underneath the bundler. Both times the scenes that failed looked broken
-     * and were not. `demo/serve.mjs` serves the pinned build
-     * (`demo/.build`), which a keystroke cannot invalidate, and
-     * `demo/pin-build.mjs` builds fresh before every run so the corpus is
-     * always of the code in the tree. It is also the production bundle, which
-     * is what anybody actually ships.
-     */
-    reuseExistingServer: false,
-    stdout: 'ignore',
-    stderr: 'pipe',
-    timeout: 60_000,
-  },
+  /**
+   * Only when there is something of ours to serve. Filming a live URL means
+   * the site is the server, and a `webServer` block would stand up a static
+   * host for a directory that was never built.
+   */
+  webServer: SITE
+    ? undefined
+    : {
+        command: `node ${join(ENGINE_DIR, 'serve.mjs')} ${join(PROJECT, '.build')} ${PORT}`,
+        url: BASE_URL,
+        cwd: PROJECT,
+        /**
+         * Never reused, and never a dev server.
+         *
+         * A corpus run died mid-flight to a dev server whose module graph belongs
+         * to whoever is editing the source: one run when another session touched
+         * the app's own source, one when an install rewrote `node_modules`
+         * underneath the bundler. Both times the scenes that failed looked broken
+         * and were not. `demo/serve.mjs` serves the pinned build
+         * (`demo/.build`), which a keystroke cannot invalidate, and
+         * `demo/pin-build.mjs` builds fresh before every run so the corpus is
+         * always of the code in the tree. It is also the production bundle, which
+         * is what anybody actually ships.
+         */
+        reuseExistingServer: false,
+        stdout: 'ignore',
+        stderr: 'pipe',
+        timeout: 60_000,
+      },
 });
