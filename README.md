@@ -1,55 +1,47 @@
-# video-demo
+<img src=".github/video.svg" width="130" alt="">
 
-A Claude Code skill for filming your web app with narrated, zooming cursor
-demos and screenshots, made on your own machine.
+# /video-demo
 
-## Install
+A skill to make your agent record demo of your web app with voice over all on your machine.
 
-macOS or Linux, with Node 22.18 or newer. Anything else it needs, it
-installs for you after asking.
+## Record a Demo
+
+Install the skill
 
 ```bash
 npx skills add nilbuild/video-demo
 ```
 
-It asks before it installs anything.
+Then ask your agent 
 
-## Use
+```bash
+/video-demo [explain what to recorded]
 
-Say what you want filmed. Prefix it with `/video-demo` to call this skill
-directly, or just say it and it will be picked up:
+/video-demo record a demo of https://example.com
+/video-demo record the checkout flow on https://example.com, use cash on delivery
+/video-demo visit http://roadmap.sh and record the roadmap search flow
+/video-demo record the login flow in the current project
+```
 
-- **"record a demo of this app"**, in the repo you want filmed
-- **"record a demo of https://example.com"**, from anywhere
-- **"record just the search on the home page"**
-- **"demo the checkout flow, skip the account settings"**
+Be as broad or as specific as you like. You can also add video instructions too e.g. "tell them it works offline now", "mention the keyboard shortcut", "keep it under twenty seconds".
 
-Be as broad or as specific as you like. Ask for the whole product and it
-proposes what to cover before filming any of it; name one feature and it
-films that one thing.
+## Ask for updates
 
-You can say what to say, too: "tell them it works offline now", "mention the
-keyboard shortcut", "keep it under twenty seconds".
+If you are not happy with the produced recording, you can ask for updates to the recorded video e.g.
 
-## It is a conversation, not a render
+- "that line is too long", "say screenshots, not stills"
+- "zoom in more on the toolbar", "stop zooming so much"
+- "slow down at the end", "say thanks for watching at the end"
+- "record the calendar first", "record the pricing page too"
+- "try a different voice", "no voice-over on this one"
 
-It films one scene first and shows you the video before doing the rest, and
-you can change anything at any point:
-
-- **the words**: "that line is too long", "say screenshots, not stills"
-- **the framing**: "zoom in more on the toolbar", "stop zooming so much"
-- **the pace**: "slow down at the end", "cut the last beat"
-- **the content**: "start on the calendar instead", "film the pricing page too"
-- **the voice**: "try a different voice", "no voice-over on this one"
-
-Say what is wrong and it re-films. Nothing is final until you say so.
+Say what is wrong and it can keep re-recording until you are happy.
 
 ## What you get
 
-An mp4 per scene with the voice-over on it, a screenshot at every moment
-worth keeping, and one video of the whole thing end to end. Everything stays
-on your machine.
+An mp4 video is produced with the voice-over on it. It also keeps screenshots at every moment
+worth keeping. Everything is done on your local machine.
 
 ## Licence
 
-MIT. Copyright [Kamran Ahmed](https://kamran.fyi).
+MIT © Copyright [Kamran Ahmed](https://kamran.fyi).
