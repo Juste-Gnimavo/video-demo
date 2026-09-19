@@ -2,11 +2,9 @@
 
 # /video-demo
 
-A skill to make your agent record demo of your web app with voice over all on your machine.
+Skill to make your agent record demo of your web app with voice over all on your machine.
 
-## Example
-
-Here is a video the skill recorded of the search flow on [roadmap.sh](https://roadmap.sh), zoom, cursor and voice-over included.
+Given below is a sample video generated using the skill for [roadmap.sh](https://roadmap.sh).
 
 https://github.com/user-attachments/assets/c20907c2-89a4-42a8-95d6-271ba3a60b80
 
