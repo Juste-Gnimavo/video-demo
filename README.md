@@ -8,9 +8,7 @@ A skill to make your agent record demo of your web app with voice over all on yo
 
 Here is a video the skill recorded of the search flow on [roadmap.sh](https://roadmap.sh), zoom, cursor and voice-over included.
 
-<video src="https://github.com/nilbuild/video-demo/raw/main/examples/roadmap-search.mp4" poster="https://github.com/nilbuild/video-demo/raw/main/examples/roadmap-search-poster.png" controls muted playsinline width="720">
-  <a href="https://github.com/nilbuild/video-demo/raw/main/examples/roadmap-search.mp4"><img src="examples/roadmap-search-poster.png" width="720" alt="Watch the example demo"></a>
-</video>
+https://github.com/user-attachments/assets/c20907c2-89a4-42a8-95d6-271ba3a60b80
 
 ## Record a Demo
 
