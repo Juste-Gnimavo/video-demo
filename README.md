@@ -48,4 +48,4 @@ worth keeping. Everything is done on your local machine.
 
 ## Licence
 
-MIT © Copyright [Kamran Ahmed](https://kamran.fyi).
+MIT © [Kamran Ahmed](https://kamran.fyi).
